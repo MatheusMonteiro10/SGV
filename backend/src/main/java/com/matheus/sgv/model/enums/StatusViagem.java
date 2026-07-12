@@ -1,4 +1,6 @@
 package com.matheus.sgv.model.enums;
 
-public class StatusViagem {
+public enum StatusViagem {
+    AGENDADA,
+    CONCLUIDA
 }

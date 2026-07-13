@@ -40,7 +40,7 @@ public class Viagem {
     private String localPartida;
 
     @Column(name = "data_partida", nullable = false)
-    private LocalDate data_partida;
+    private LocalDate dataPartida;
 
     @Column(name = "horario_partida", nullable = false)
     private LocalTime horarioPartida;
@@ -59,19 +59,19 @@ public class Viagem {
     private Integer avaliacao;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
 
     public Viagem(Usuario usuario, String nomeCliente, String destino, String localPartida,
-                  LocalDate data_partida, LocalTime horarioPartida, BigDecimal valorCobrado,
+                  LocalDate dataPartida, LocalTime horarioPartida, BigDecimal valorCobrado,
                   String observacoes) {
         this.usuario = usuario;
         this.nomeCliente = nomeCliente;
         this.destino = destino;
         this.localPartida = localPartida;
-        this.data_partida = data_partida;
+        this.dataPartida = dataPartida;
         this.horarioPartida = horarioPartida;
         this.valorCobrado = valorCobrado;
         this.observacoes = observacoes;
@@ -80,12 +80,12 @@ public class Viagem {
     @PrePersist
     protected void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        this.created_at = now;
-        this.updated_at = now;
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        this.updated_at = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 }

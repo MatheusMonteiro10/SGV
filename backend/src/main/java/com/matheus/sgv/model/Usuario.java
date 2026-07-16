@@ -44,6 +44,9 @@ public class Usuario {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     // Construtor para cadastro local
     public Usuario(String nome, String email, String senhaHash) {
         this.nome = nome;

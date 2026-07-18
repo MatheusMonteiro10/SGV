@@ -2,6 +2,7 @@ package com.matheus.sgv.service;
 
 import com.matheus.sgv.exception.UnauthorizedAcessException;
 import com.matheus.sgv.exception.ResourceNotFoundException;
+import com.matheus.sgv.exception.InvalidStatusTransitionException;
 import com.matheus.sgv.model.Usuario;
 import com.matheus.sgv.model.Viagem;
 import com.matheus.sgv.model.enums.StatusViagem;
@@ -72,6 +73,18 @@ public class ViagemService {
     public void remover(UUID id, Usuario solicitante) {
         Viagem viagem = buscarPorId(id, solicitante);
         viagemRepository.delete(viagem);
+    }
+
+    @Transactional
+    public Viagem avaliar(UUID id, Usuario solicitante, Integer nota) {
+        Viagem viagem = buscarPorId(id, solicitante);
+
+        if (viagem.getStatusViagem() != StatusViagem.CONCLUIDA) {
+            throw new InvalidStatusTransitionException("Só é possível avaliar viagens concluídas");
+        }
+
+        viagem.setAvaliacao(nota);
+        return viagem;
     }
 
     private void validarPropriedade(Viagem viagem, Usuario solicitante) {

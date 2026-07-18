@@ -11,6 +11,7 @@ import com.matheus.sgv.dto.auth.VerificacaoEmailRequest;
 import com.matheus.sgv.dto.usuario.UsuarioResponse;
 import com.matheus.sgv.model.Usuario;
 import com.matheus.sgv.service.AuthService;
+import com.matheus.sgv.service.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final JwtService jwtService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, JwtService jwtService) {
         this.authService = authService;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/registro")
@@ -45,8 +48,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         Usuario usuario = authService.login(request.email(), request.senha());
-        // TODO: substituir por token JWT real quando JwtService existir
-        LoginResponse response = new LoginResponse(null, UsuarioResponse.from(usuario));
+        String token = jwtService.gerarToken(usuario);
+        LoginResponse response = new LoginResponse(token, UsuarioResponse.from(usuario));
         return ResponseEntity.ok(response);
     }
 
@@ -61,6 +64,4 @@ public class AuthController {
         authService.reenviarCodigo(request.email(), TipoCodigoVerificacao.RESET_SENHA);
         return ResponseEntity.ok(new MensagemResponse("Se o e-mail existir, um código foi enviado."));
     }
-
-    //TODO: Implementar JWT ao login
 }

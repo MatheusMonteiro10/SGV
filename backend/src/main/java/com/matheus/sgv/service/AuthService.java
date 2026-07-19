@@ -1,8 +1,10 @@
 package com.matheus.sgv.service;
 
+import com.matheus.sgv.dto.auth.GoogleUserInfo;
 import com.matheus.sgv.exception.*;
 import com.matheus.sgv.model.CodigoVerificacao;
 import com.matheus.sgv.model.Usuario;
+import com.matheus.sgv.model.enums.AuthProvider;
 import com.matheus.sgv.model.enums.TipoCodigoVerificacao;
 import com.matheus.sgv.repository.CodigoVerificacaoRepository;
 import com.matheus.sgv.repository.UsuarioRepository;
@@ -22,15 +24,18 @@ public class AuthService {
     private final CodigoVerificacaoRepository codigoVerificacaoRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final GoogleAuthService googleAuthService;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        CodigoVerificacaoRepository codigoVerificacaoRepository,
                        PasswordEncoder passwordEncoder,
-                       EmailService emailService) {
+                       EmailService emailService,
+                       GoogleAuthService googleAuthService) {
         this.usuarioRepository = usuarioRepository;
         this.codigoVerificacaoRepository = codigoVerificacaoRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.googleAuthService = googleAuthService;
     }
 
     @Transactional
@@ -81,8 +86,6 @@ public class AuthService {
         }
 
         return usuario;
-        // TODO: gerar e retornar JWT quando JwtService existir.
-        // Por ora devolve a entidade
     }
 
     @Transactional
@@ -92,12 +95,13 @@ public class AuthService {
         reenviarCodigo(usuario, tipo);
     }
 
-    // TODO: implementar autenticação com Google.
-    // @Transactional
-    // public Usuario autenticarOuRegistrarGoogle(String tokenGoogle) {
-    //     var payload = googleAuthService.verificar(tokenGoogle);
-    //     ...
-    // }
+    @Transactional
+    public Usuario autenticarOuRegistrarGoogle(String idTokenString) {
+        GoogleUserInfo info = googleAuthService.verificarToken(idTokenString);
+
+        return usuarioRepository.findByGoogleId(info.googleId())
+                .orElseGet(() -> registrarViaGoogle(info));
+    }
 
     // ---- Helpers privados ----
 
@@ -133,5 +137,16 @@ public class AuthService {
         }
 
         codigo.setUsado(true);
+    }
+
+    private Usuario registrarViaGoogle(GoogleUserInfo info) {
+        usuarioRepository.findByEmail(info.email()).ifPresent(existente -> {
+            throw new EmailAlreadyRegisteredException(
+                    "O e-mail " + info.email() + " já está cadastrado com login por senha.");
+        });
+
+        Usuario usuario = new Usuario(info.nome(), info.email(), info.googleId(), AuthProvider.GOOGLE);
+        usuario.setEmailVerified(true); // Google já garante que o e-mail é verificado
+        return usuarioRepository.save(usuario);
     }
 }

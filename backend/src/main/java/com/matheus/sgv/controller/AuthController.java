@@ -9,6 +9,7 @@ import com.matheus.sgv.model.enums.TipoCodigoVerificacao;
 import com.matheus.sgv.dto.auth.RegistroRequest;
 import com.matheus.sgv.dto.auth.VerificacaoEmailRequest;
 import com.matheus.sgv.dto.usuario.UsuarioResponse;
+import com.matheus.sgv.dto.auth.GoogleLoginRequest;
 import com.matheus.sgv.model.Usuario;
 import com.matheus.sgv.service.AuthService;
 import com.matheus.sgv.service.JwtService;
@@ -63,5 +64,13 @@ public class AuthController {
     public ResponseEntity<MensagemResponse> esqueciSenha(@Valid @RequestBody RedefinirSenhaRequest request) {
         authService.reenviarCodigo(request.email(), TipoCodigoVerificacao.RESET_SENHA);
         return ResponseEntity.ok(new MensagemResponse("Se o e-mail existir, um código foi enviado."));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<LoginResponse> autenticarGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        Usuario usuario = authService.autenticarOuRegistrarGoogle(request.idToken());
+        String token = jwtService.gerarToken(usuario);
+        LoginResponse response = new LoginResponse(token, UsuarioResponse.from(usuario));
+        return ResponseEntity.ok(response);
     }
 }

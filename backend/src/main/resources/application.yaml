@@ -27,3 +27,6 @@ jwt:
 
 cors:
   allowed-origins: ${ALLOWED_ORIGINS}
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID}

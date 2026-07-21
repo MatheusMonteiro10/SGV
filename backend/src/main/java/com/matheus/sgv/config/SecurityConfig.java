@@ -23,7 +23,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    @Value("${cors.allowed-origins")
+    @Value("${cors.allowed-origins}")
     private String allowedOriginsRaw;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {

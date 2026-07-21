@@ -1,0 +1,27 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  mail:
+    host: localhost
+    port: 3025
+    username: teste@sgv.local
+    password: senha-de-teste
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  secret: segredo-de-teste-para-integracao-nao-usar-em-producao
+  expiration-ms: 3600000
+
+cors:
+  allowed-origins: http://localhost:5173
+
+google:
+  client-id: id-de-teste-fake

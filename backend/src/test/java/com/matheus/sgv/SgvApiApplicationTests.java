@@ -6,8 +6,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class SgvApiApplicationTests {
+class SgvApiApplicationTests extends BaseIntegrationTest {
 
-	@Test
-	void contextLoads() {}
+    @Test
+    void contextLoads() {}
 }

@@ -23,11 +23,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Testes de integração do ViagemService: Spring context real, Postgres real (Testcontainers).
- * Foco em provar persistência via dirty checking (atualizarStatus e avaliar não chamam save()
- * explicitamente) e em checagem de propriedade com usuários de fato persistidos no banco,
- * não instâncias soltas em memória como nos unit tests com Mockito.
+/*
+  Testes de integração do ViagemService: Spring context real, Postgres real (Testcontainers).
+  Foco em provar persistência via dirty checking (atualizarStatus e avaliar não chamam save()
+  explicitamente) e em checagem de propriedade com usuários de fato persistidos no banco,
+  não instâncias soltas em memória como nos unit tests com Mockito.
  */
 @Transactional
 class ViagemServiceIntegrationTest extends BaseIntegrationTest {

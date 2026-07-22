@@ -22,15 +22,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
-/**
- * Testes de integração do AuthService: Spring context real, Postgres real (Testcontainers),
- * migrations reais via Flyway. O objetivo aqui é validar o que o unit test com Mockito
- * estruturalmente não consegue provar: que o dirty checking do Hibernate de fato persiste
- * as mudanças no banco ao final da transação.
- *
- * EmailService é mockado (@MockBean) para não depender de um servidor SMTP real durante os
- * testes — consistente com a preferência já estabelecida de mockar contra a interface em vez
- * de trocar implementação via @Profile.
+/*
+  Testes de integração do AuthService: Spring context real, Postgres real (Testcontainers),
+  migrations reais via Flyway. O objetivo aqui é validar o que o unit test com Mockito
+  estruturalmente não consegue provar: que o dirty checking do Hibernate de fato persiste
+  as mudanças no banco ao final da transação.
+  EmailService é mockado (@MockBean) para não depender de um servidor SMTP real durante os
  */
 @Transactional
 class AuthServiceIntegrationTest extends BaseIntegrationTest {

@@ -10,6 +10,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   isLoading: boolean
   login: (email: string, senha: string) => Promise<void>
+  loginWithGoogle: (idToken: string) => Promise<void>
   logout: () => void
 }
 
@@ -20,11 +21,6 @@ function limparStorage() {
   localStorage.removeItem(USUARIO_KEY)
 }
 
-/**
- * Lê a sessão persistida, mas só a considera válida se o token
- * ainda não estiver expirado. Evita renderizar rotas protegidas
- * com uma sessão morta que só seria pega no primeiro 401.
- */
 function readSessaoValida(): Usuario | null {
   const token = localStorage.getItem(TOKEN_KEY)
   const raw = localStorage.getItem(USUARIO_KEY)
@@ -52,17 +48,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(null)
   }, [])
 
-  const login = useCallback(async (email: string, senha: string) => {
-    setIsLoading(true)
-    try {
-      const { data } = await api.post<LoginResponse>('/auth/login', { email, senha })
-      localStorage.setItem(TOKEN_KEY, data.token)
-      localStorage.setItem(USUARIO_KEY, JSON.stringify(data.usuario))
-      setUsuario(data.usuario)
-    } finally {
-      setIsLoading(false)
-    }
+  const persistirSessao = useCallback((data: LoginResponse) => {
+    localStorage.setItem(TOKEN_KEY, data.token)
+    localStorage.setItem(USUARIO_KEY, JSON.stringify(data.usuario))
+    setUsuario(data.usuario)
   }, [])
+
+  const login = useCallback(
+    async (email: string, senha: string) => {
+      setIsLoading(true)
+      try {
+        const { data } = await api.post<LoginResponse>('/auth/login', { email, senha })
+        persistirSessao(data)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [persistirSessao],
+  )
+
+  const loginWithGoogle = useCallback(
+    async (idToken: string) => {
+      setIsLoading(true)
+      try {
+        const { data } = await api.post<LoginResponse>('/auth/google', { idToken })
+        persistirSessao(data)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [persistirSessao],
+  )
 
   useEffect(() => {
     window.addEventListener('sgv:unauthorized', logout)
@@ -75,9 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: usuario !== null,
       isLoading,
       login,
+      loginWithGoogle,
       logout,
     }),
-    [usuario, isLoading, login, logout],
+    [usuario, isLoading, login, loginWithGoogle, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

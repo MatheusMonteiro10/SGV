@@ -4,6 +4,26 @@ export interface Usuario {
   email: string
 }
 
+export interface RegistroRequest {
+  nome: string
+  email: string
+  senha: string
+  confirmacaoSenha: string
+}
+
+export interface VerificacaoEmailRequest {
+  email: string
+  codigo: string
+}
+
+export interface ReenvioConfirmacaoRequest {
+  email: string
+}
+
+export interface MensagemResponse {
+  mensagem: string
+}
+
 export interface LoginRequest {
   email: string
   senha: string
@@ -19,4 +39,8 @@ export interface ApiErrorResponse {
   status: number
   message: string
   campos?: Record<string, string>
+}
+
+export interface GoogleLoginRequest {
+  idToken: string
 }

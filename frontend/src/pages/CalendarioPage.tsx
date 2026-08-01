@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useViagensPorPeriodo } from '../hooks/useViagensPorPeriodo'
 import { gerarGradeMensal, NOMES_DIAS_SEMANA, NOMES_MESES } from '../utils/calendario'
+import { ModalListaViagensDia } from '../components/viagens/ModalListaViagensDia'
+import type { ViagemResponse } from '../types/viagem'
 
 export function CalendarioPage() {
   const hoje = new Date()
@@ -25,6 +27,27 @@ export function CalendarioPage() {
       .forEach((v) => set.add(v.dataPartida))
     return set
   }, [viagens])
+
+  // Viagens AGENDADA do dia clicado, ordenadas por horário — é o que o Modal 1 lista.
+  const viagensDoDiaSelecionado = useMemo(() => {
+    if (!diaSelecionado || !viagens) return []
+    return viagens
+      .filter((v) => v.status === 'AGENDADA' && v.dataPartida === diaSelecionado)
+      .sort((a, b) => a.horarioPartida.localeCompare(b.horarioPartida))
+  }, [viagens, diaSelecionado])
+
+  const tituloModal = useMemo(() => {
+    if (!diaSelecionado) return ''
+    // dataIso é yyyy-MM-dd local; construir com partes evita off-by-one por fuso.
+    const [y, m, d] = diaSelecionado.split('-').map(Number)
+    const data = new Date(y, m - 1, d)
+    const texto = new Intl.DateTimeFormat('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }).format(data)
+    return texto.charAt(0).toUpperCase() + texto.slice(1)
+  }, [diaSelecionado])
 
   function irParaMesAnterior() {
     setDiaSelecionado(null)
@@ -55,6 +78,21 @@ export function CalendarioPage() {
   function handleClickDia(dataIso: string) {
     setDiaSelecionado(dataIso)
     // TODO: abrir Modal 1 (lista de viagens do dia)
+  }
+
+  function handleFecharModal() {
+    setDiaSelecionado(null)
+  }
+
+  function handleSelecionarViagem(viagem: ViagemResponse) {
+    // TODO (item 6 do roadmap): abrir Modal 2 (detalhes) empilhado sobre este.
+    console.log('Abrir Modal 2 para viagem:', viagem.id)
+  }
+
+  function handleAgendarNovaViagem() {
+    // TODO: abrir o modal compartilhado de registro/edição,
+    // empilhado sobre este, pré-preenchido com diaSelecionado.
+    console.log('Abrir modal de registro para o dia:', diaSelecionado)
   }
 
   return (
@@ -144,7 +182,19 @@ export function CalendarioPage() {
         <span className="h-1.5 w-1.5 rounded-full bg-amber" />
         Dia com viagem agendada
       </p>
+
+      <ModalListaViagensDia
+        isOpen={diaSelecionado !== null}
+        onClose={handleFecharModal}
+        titulo={tituloModal}
+        viagens={viagensDoDiaSelecionado}
+        isLoading={isLoading}
+        onSelecionarViagem={handleSelecionarViagem}
+        onAgendarNovaViagem={handleAgendarNovaViagem}
+      />
     </div>
+
+    
   )
 }
 

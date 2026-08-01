@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useViagensPorPeriodo } from '../hooks/useViagensPorPeriodo'
 import { gerarGradeMensal, NOMES_DIAS_SEMANA, NOMES_MESES } from '../utils/calendario'
 import { ModalListaViagensDia } from '../components/viagens/ModalListaViagensDia'
+import { ModalDetalhesViagem } from '../components/viagens/ModalDetalhesViagem'
 import type { ViagemResponse } from '../types/viagem'
 
 export function CalendarioPage() {
@@ -9,6 +10,7 @@ export function CalendarioPage() {
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth()) // 0-indexed
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null)
+  const [viagemSelecionada, setViagemSelecionada] = useState<ViagemResponse | null>(null)
 
   const grade = useMemo(() => gerarGradeMensal(ano, mes), [ano, mes])
 
@@ -77,7 +79,6 @@ export function CalendarioPage() {
 
   function handleClickDia(dataIso: string) {
     setDiaSelecionado(dataIso)
-    // TODO: abrir Modal 1 (lista de viagens do dia)
   }
 
   function handleFecharModal() {
@@ -85,8 +86,18 @@ export function CalendarioPage() {
   }
 
   function handleSelecionarViagem(viagem: ViagemResponse) {
-    // TODO (item 6 do roadmap): abrir Modal 2 (detalhes) empilhado sobre este.
-    console.log('Abrir Modal 2 para viagem:', viagem.id)
+    // Modal 2 empilha sobre o Modal 1 — o Modal 1 continua montado por baixo
+    setViagemSelecionada(viagem)
+  }
+
+  function handleFecharModalDetalhes() {
+    setViagemSelecionada(null)
+  }
+
+  function handleAlterarViagem(viagem: ViagemResponse) {
+    // TODO: abrir o modal compartilhado de registro/edição,
+    // empilhado sobre o Modal 2, pré-preenchido com os dados de `viagem`.
+    console.log('Abrir modal de edição para a viagem:', viagem.id)
   }
 
   function handleAgendarNovaViagem() {
@@ -192,9 +203,14 @@ export function CalendarioPage() {
         onSelecionarViagem={handleSelecionarViagem}
         onAgendarNovaViagem={handleAgendarNovaViagem}
       />
-    </div>
 
-    
+      <ModalDetalhesViagem
+        isOpen={viagemSelecionada !== null}
+        onClose={handleFecharModalDetalhes}
+        viagem={viagemSelecionada}
+        onAlterar={handleAlterarViagem}
+      />
+    </div>
   )
 }
 

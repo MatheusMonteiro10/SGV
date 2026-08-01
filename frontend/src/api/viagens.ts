@@ -8,3 +8,7 @@ export function registrarViagem(dados: ViagemRequest) {
 export function listarPorPeriodo(inicio: string, fim: string) {
   return api.get<ViagemResponse[]>('/viagens/periodo', { params: { inicio, fim } })
 }
+
+export function excluirViagem(id: string) {
+  return api.delete<void>(`/viagens/${id}`)
+}

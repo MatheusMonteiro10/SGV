@@ -176,6 +176,36 @@ class ViagemServiceTest {
         verify(viagemRepository, never()).save(any());
     }
 
+    // ---------- atualizar ----------
+
+    @Test
+    void atualizar_viagemNaoPertenceAoSolicitante_lancaUnauthorizedAcessException() {
+        Viagem viagem = criarViagem(dono, StatusViagem.AGENDADA);
+        when(viagemRepository.findById(viagem.getId())).thenReturn(Optional.of(viagem));
+
+        assertThatThrownBy(() -> viagemService.atualizar(
+                viagem.getId(), outroUsuario, "Novo Cliente", "Novo Destino", "Novo Local",
+                LocalDate.now().plusDays(2), LocalTime.of(10, 0), new BigDecimal("200.00"), null))
+                .isInstanceOf(UnauthorizedAcessException.class);
+
+        assertThat(viagem.getNomeCliente()).isEqualTo("Cliente X");
+    }
+
+    @Test
+    void atualizar_solicitanteDono_alteraCamposViaDirtyChecking() {
+        Viagem viagem = criarViagem(dono, StatusViagem.AGENDADA);
+        when(viagemRepository.findById(viagem.getId())).thenReturn(Optional.of(viagem));
+
+        Viagem resultado = viagemService.atualizar(
+                viagem.getId(), dono, "Novo Cliente", "Novo Destino", "Novo Local",
+                LocalDate.now().plusDays(2), LocalTime.of(10, 0), new BigDecimal("200.00"), "obs nova");
+
+        assertThat(resultado.getNomeCliente()).isEqualTo("Novo Cliente");
+        assertThat(resultado.getDestino()).isEqualTo("Novo Destino");
+        assertThat(resultado.getValorCobrado()).isEqualByComparingTo("200.00");
+        verify(viagemRepository, never()).save(any());
+    }
+
     // ---------- remover ----------
 
     @Test

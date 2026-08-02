@@ -142,6 +142,45 @@ class ViagemControllerTest {
                 .andExpect(jsonPath("$.campos.nomeCliente").exists());
     }
 
+    // ---------- PUT /api/viagens/{id} ----------
+
+    @Test
+    void atualizar_autenticadoComDadosValidos_retorna200() throws Exception {
+        UUID id = UUID.randomUUID();
+        Viagem viagemAtualizada = criarViagem(StatusViagem.AGENDADA);
+        viagemAtualizada.setId(id);
+        viagemAtualizada.setNomeCliente("Cliente Editado");
+
+        when(viagemService.atualizar(eq(id), eq(usuarioAutenticado), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(viagemAtualizada);
+
+        ViagemRequest request = new ViagemRequest("Cliente Editado", "Destino Y", "Local Z",
+                LocalDate.now().plusDays(1), LocalTime.of(9, 0), new BigDecimal("150.00"), null);
+
+        mockMvc.perform(put("/api/viagens/{id}", id)
+                        .with(authentication(autenticacao))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nomeCliente").value("Cliente Editado"));
+    }
+
+    @Test
+    void atualizar_viagemDeOutroUsuario_retorna403() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(viagemService.atualizar(eq(id), eq(usuarioAutenticado), any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new UnauthorizedAcessException("Viagem não pertence ao usuário solicitante"));
+
+        ViagemRequest request = new ViagemRequest("Cliente X", "Destino Y", "Local Z",
+                LocalDate.now().plusDays(1), LocalTime.of(9, 0), new BigDecimal("150.00"), null);
+
+        mockMvc.perform(put("/api/viagens/{id}", id)
+                        .with(authentication(autenticacao))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
     // ---------- GET /api/viagens/{id} ----------
 
     @Test

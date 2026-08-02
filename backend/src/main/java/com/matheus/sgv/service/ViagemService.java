@@ -92,4 +92,21 @@ public class ViagemService {
             throw new UnauthorizedAcessException("Viagem não pertence ao usuário solicitante");
         }
     }
+
+    @Transactional
+    public Viagem atualizar(UUID id, Usuario solicitante, String nomeCliente, String destino, String localPartida,
+                            LocalDate dataPartida, LocalTime horarioPartida, BigDecimal valorCobrado,
+                            String observacoes) {
+        Viagem viagem = buscarPorId(id, solicitante);
+
+        viagem.setNomeCliente(nomeCliente);
+        viagem.setDestino(destino);
+        viagem.setLocalPartida(localPartida);
+        viagem.setDataPartida(dataPartida);
+        viagem.setHorarioPartida(horarioPartida);
+        viagem.setValorCobrado(valorCobrado);
+        viagem.setObservacoes(observacoes);
+
+        return viagem; 
+    }
 }

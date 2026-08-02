@@ -44,6 +44,24 @@ public class ViagemController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ViagemResponse.from(viagem));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ViagemResponse> atualizar(@PathVariable UUID id,
+                                                    @Valid @RequestBody ViagemRequest request,
+                                                    @AuthenticationPrincipal Usuario usuario) {
+        Viagem viagem = viagemService.atualizar(
+                id,
+                usuario,
+                request.nomeCliente(),
+                request.destino(),
+                request.localPartida(),
+                request.dataPartida(),
+                request.horarioPartida(),
+                request.valorCobrado(),
+                request.observacoes());
+
+        return ResponseEntity.ok(ViagemResponse.from(viagem));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ViagemResponse> buscarPorId(@PathVariable UUID id,
                                                       @AuthenticationPrincipal Usuario usuario) {

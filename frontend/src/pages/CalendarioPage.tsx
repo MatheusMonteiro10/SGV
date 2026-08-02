@@ -3,7 +3,12 @@ import { useViagensPorPeriodo } from '../hooks/useViagensPorPeriodo'
 import { gerarGradeMensal, NOMES_DIAS_SEMANA, NOMES_MESES } from '../utils/calendario'
 import { ModalListaViagensDia } from '../components/viagens/ModalListaViagensDia'
 import { ModalDetalhesViagem } from '../components/viagens/ModalDetalhesViagem'
+import { ModalRegistroEdicaoViagem } from '../components/viagens/ModalRegistroEdicaoViagem'
 import type { ViagemResponse } from '../types/viagem'
+
+type EstadoFormulario =
+  | { modo: 'criar'; data: string }
+  | { modo: 'editar'; viagem: ViagemResponse }
 
 export function CalendarioPage() {
   const hoje = new Date()
@@ -11,6 +16,7 @@ export function CalendarioPage() {
   const [mes, setMes] = useState(hoje.getMonth()) // 0-indexed
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null)
   const [viagemSelecionada, setViagemSelecionada] = useState<ViagemResponse | null>(null)
+ const [formulario, setFormulario] = useState<EstadoFormulario | null>(null)
 
   const grade = useMemo(() => gerarGradeMensal(ano, mes), [ano, mes])
 
@@ -95,15 +101,27 @@ export function CalendarioPage() {
   }
 
   function handleAlterarViagem(viagem: ViagemResponse) {
-    // TODO: abrir o modal compartilhado de registro/edição,
-    // empilhado sobre o Modal 2, pré-preenchido com os dados de `viagem`.
-    console.log('Abrir modal de edição para a viagem:', viagem.id)
+    setFormulario({ modo: 'editar', viagem })
   }
 
   function handleAgendarNovaViagem() {
-    // TODO: abrir o modal compartilhado de registro/edição,
-    // empilhado sobre este, pré-preenchido com diaSelecionado.
-    console.log('Abrir modal de registro para o dia:', diaSelecionado)
+    if (!diaSelecionado) return
+    setFormulario({ modo: 'criar', data: diaSelecionado })
+  }
+
+  function handleFecharFormulario() {
+    // Cancelar: volta pro estado anterior inalterado — Modal 1 (se veio de
+    // "agendar") ou Modal 2 (se veio de "alterar"), que continuam montados
+    // por baixo e não são tocados aqui.
+    setFormulario(null)
+  }
+
+  function handleSucessoFormulario() {
+    const modo = formulario?.modo
+    setFormulario(null)
+    // Editar: fecha também o Modal 2, voltando ao Modal 1 já atualizado.
+    // Criar: Modal 1 continua aberto, lista atualiza sozinha via invalidação.
+    if (modo === 'editar') setViagemSelecionada(null)
   }
 
   return (
@@ -210,7 +228,16 @@ export function CalendarioPage() {
         viagem={viagemSelecionada}
         onAlterar={handleAlterarViagem}
       />
-    </div>
+
+      <ModalRegistroEdicaoViagem
+        isOpen={formulario !== null}
+        onClose={handleFecharFormulario}
+        onSuccess={handleSucessoFormulario}
+        modo={formulario?.modo ?? 'criar'}
+        viagem={formulario?.modo === 'editar' ? formulario.viagem : null}
+        dataInicial={formulario?.modo === 'criar' ? formulario.data : undefined}
+      />
+    </div>  
   )
 }
 

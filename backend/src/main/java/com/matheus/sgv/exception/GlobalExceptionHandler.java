@@ -76,6 +76,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(PasswordResetNotAllowedException.class)
+    public ResponseEntity<ErrorResponse> handlePasswordResetNotAllowed(PasswordResetNotAllowedException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {
         ErrorResponse body = new ErrorResponse(LocalDateTime.now(), status.value(), message, null);
         return ResponseEntity.status(status).body(body);

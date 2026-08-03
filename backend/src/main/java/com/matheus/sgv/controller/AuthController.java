@@ -8,6 +8,7 @@ import com.matheus.sgv.dto.auth.RedefinirSenhaRequest;
 import com.matheus.sgv.model.enums.TipoCodigoVerificacao;
 import com.matheus.sgv.dto.auth.RegistroRequest;
 import com.matheus.sgv.dto.auth.VerificacaoEmailRequest;
+import com.matheus.sgv.dto.auth.ConfirmarRedefinicaoSenhaRequest;
 import com.matheus.sgv.dto.usuario.UsuarioResponse;
 import com.matheus.sgv.dto.auth.GoogleLoginRequest;
 import com.matheus.sgv.model.Usuario;
@@ -64,6 +65,12 @@ public class AuthController {
     public ResponseEntity<MensagemResponse> esqueciSenha(@Valid @RequestBody RedefinirSenhaRequest request) {
         authService.reenviarCodigo(request.email(), TipoCodigoVerificacao.RESET_SENHA);
         return ResponseEntity.ok(new MensagemResponse("Se o e-mail existir, um código foi enviado."));
+    }
+
+    @PostMapping("/redefinir-senha")
+    public ResponseEntity<MensagemResponse> redefinirSenha(@Valid @RequestBody ConfirmarRedefinicaoSenhaRequest request) {
+        authService.redefinirSenha(request.email(), request.codigo(), request.novaSenha(), request.confirmacaoNovaSenha());
+        return ResponseEntity.ok(new MensagemResponse("Senha redefinida com sucesso."));
     }
 
     @PostMapping("/google")

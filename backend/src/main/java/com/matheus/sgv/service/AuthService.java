@@ -96,6 +96,25 @@ public class AuthService {
     }
 
     @Transactional
+    public void redefinirSenha(String email, String codigoInformado, String novaSenha, String confirmacaoNovaSenha) {
+        if (!novaSenha.equals(confirmacaoNovaSenha)) {
+            throw new InvalidCredentialsException("As senhas não conferem");
+        }
+
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + email));
+
+        if (usuario.getProvider() == AuthProvider.GOOGLE) {
+            throw new PasswordResetNotAllowedException(
+                    "Esta conta usa login com Google e não possui senha para redefinir");
+        }
+
+        validarCodigo(usuario, codigoInformado, TipoCodigoVerificacao.RESET_SENHA);
+
+        usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+    }
+
+    @Transactional
     public Usuario autenticarOuRegistrarGoogle(String idTokenString) {
         GoogleUserInfo info = googleAuthService.verificarToken(idTokenString);
 

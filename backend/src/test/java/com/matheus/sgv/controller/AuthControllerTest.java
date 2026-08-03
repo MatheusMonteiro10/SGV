@@ -6,6 +6,7 @@ import com.matheus.sgv.dto.auth.RegistroRequest;
 import com.matheus.sgv.dto.auth.VerificacaoEmailRequest;
 import com.matheus.sgv.exception.InvalidCredentialsException;
 import com.matheus.sgv.exception.UnverifiedEmailException;
+import com.matheus.sgv.exception.InvalidVerificationCodeException;
 import com.matheus.sgv.model.Usuario;
 import com.matheus.sgv.model.enums.TipoCodigoVerificacao;
 import com.matheus.sgv.config.SecurityConfig;
@@ -184,5 +185,102 @@ class AuthControllerTest {
 
         org.mockito.Mockito.verify(authService)
                 .reenviarCodigo("ana@mail.com", TipoCodigoVerificacao.REGISTRO);
+    }
+
+    // ---------- POST /api/auth/redefinir-senha ----------
+
+    @Test
+    void redefinirSenha_dadosValidos_retorna200EChamaServiceComParametrosCorretos() throws Exception {
+        String body = """
+            {"email": "ana@mail.com", "codigo": "123456", "novaSenha": "novaSenha1", "confirmacaoNovaSenha": "novaSenha1"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensagem").exists());
+
+        org.mockito.Mockito.verify(authService)
+                .redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1");
+    }
+
+    @Test
+    void redefinirSenha_novaSenhaCurta_retorna400ComErroDeValidacao() throws Exception {
+        String body = """
+            {"email": "ana@mail.com", "codigo": "123456", "novaSenha": "123", "confirmacaoNovaSenha": "123"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.novaSenha").exists());
+
+        org.mockito.Mockito.verifyNoInteractions(authService);
+    }
+
+    @Test
+    void redefinirSenha_codigoComTamanhoErrado_retorna400ComErroDeValidacao() throws Exception {
+        String body = """
+            {"email": "ana@mail.com", "codigo": "123", "novaSenha": "novaSenha1", "confirmacaoNovaSenha": "novaSenha1"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.codigo").exists());
+
+        org.mockito.Mockito.verifyNoInteractions(authService);
+    }
+
+    @Test
+    void redefinirSenha_senhasNaoConferem_retorna401() throws Exception {
+        org.mockito.Mockito.doThrow(new InvalidCredentialsException("As senhas não conferem"))
+                .when(authService).redefinirSenha("ana@mail.com", "123456", "novaSenha1", "outraSenha1");
+
+        String body = """
+            {"email": "ana@mail.com", "codigo": "123456", "novaSenha": "novaSenha1", "confirmacaoNovaSenha": "outraSenha1"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("As senhas não conferem"));
+    }
+
+    @Test
+    void redefinirSenha_contaGoogle_retorna409() throws Exception {
+        org.mockito.Mockito.doThrow(new com.matheus.sgv.exception.PasswordResetNotAllowedException(
+                        "Esta conta usa login com Google e não possui senha para redefinir"))
+                .when(authService).redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1");
+
+        String body = """
+            {"email": "ana@mail.com", "codigo": "123456", "novaSenha": "novaSenha1", "confirmacaoNovaSenha": "novaSenha1"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void redefinirSenha_codigoInvalido_retorna400() throws Exception {
+        org.mockito.Mockito.doThrow(new InvalidVerificationCodeException("Código incorreto"))
+                .when(authService).redefinirSenha("ana@mail.com", "000000", "novaSenha1", "novaSenha1");
+
+        String body = """
+            {"email": "ana@mail.com", "codigo": "000000", "novaSenha": "novaSenha1", "confirmacaoNovaSenha": "novaSenha1"}
+            """;
+
+        mockMvc.perform(post("/api/auth/redefinir-senha")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Código incorreto"));
     }
 }

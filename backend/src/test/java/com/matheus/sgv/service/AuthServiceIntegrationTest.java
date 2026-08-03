@@ -121,4 +121,57 @@ class AuthServiceIntegrationTest extends BaseIntegrationTest {
         long quantidade = usuarioRepository.findByEmail("dan.integracao@mail.com").stream().count();
         assertThat(quantidade).isEqualTo(1); // não deve ter criado um segundo registro
     }
+
+    @Test
+    void redefinirSenha_codigoValido_persisteNovaSenhaHashNoBanco() {
+        authService.registrarLocal("Elis", "elis.integracao@mail.com", "senhaAntiga1", "senhaAntiga1");
+        entityManager.flush();
+
+        Usuario usuario = usuarioRepository.findByEmail("elis.integracao@mail.com").orElseThrow();
+        String hashAntigo = usuario.getSenhaHash();
+
+        // dispara o código de RESET_SENHA (fluxo real: /esqueci-senha)
+        authService.reenviarCodigo("elis.integracao@mail.com", TipoCodigoVerificacao.RESET_SENHA);
+        entityManager.flush();
+
+        CodigoVerificacao codigo = codigoVerificacaoRepository
+                .findTopByUsuarioAndTipoAndUsadoFalseOrderByExpiracaoDesc(usuario, TipoCodigoVerificacao.RESET_SENHA)
+                .orElseThrow();
+
+        entityManager.clear();
+
+        authService.redefinirSenha("elis.integracao@mail.com", codigo.getCodigo(), "senhaNova123", "senhaNova123");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Usuario recarregado = usuarioRepository.findByEmail("elis.integracao@mail.com").orElseThrow();
+        assertThat(recarregado.getSenhaHash())
+                .as("senha_hash deveria ter sido persistida via dirty checking, sem chamada explícita a save()")
+                .isNotEqualTo(hashAntigo);
+
+        CodigoVerificacao codigoRecarregado = codigoVerificacaoRepository.findById(codigo.getId()).orElseThrow();
+        assertThat(codigoRecarregado.isUsado()).isTrue();
+
+        verify(emailService).enviarCodigoResetSenha(eq("elis.integracao@mail.com"), any());
+    }
+
+    @Test
+    void redefinirSenha_contaGoogle_naoAlteraSenhaHashNoBanco() {
+        // Fluxo Google não passa por registrarLocal; cria o usuário direto no repositório
+        // pra simular uma conta que só existe via OAuth.
+        Usuario usuarioGoogle = new Usuario("Gui", "gui.integracao@mail.com", "google-id-fake",
+                com.matheus.sgv.model.enums.AuthProvider.GOOGLE);
+        usuarioGoogle.setEmailVerified(true);
+        usuarioRepository.save(usuarioGoogle);
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("gui.integracao@mail.com", "123456", "senhaNova123", "senhaNova123"))
+                .isInstanceOf(com.matheus.sgv.exception.PasswordResetNotAllowedException.class);
+
+        Usuario recarregado = usuarioRepository.findByEmail("gui.integracao@mail.com").orElseThrow();
+        assertThat(recarregado.getSenhaHash()).isNull();
+    }
 }

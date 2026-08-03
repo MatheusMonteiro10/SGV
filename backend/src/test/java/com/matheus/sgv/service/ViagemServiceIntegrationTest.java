@@ -107,6 +107,46 @@ class ViagemServiceIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void atualizar_solicitanteDono_persisteAlteracoesViaDirtyChecking() {
+        Viagem viagem = registrarViagemPersistida(dono, StatusViagem.AGENDADA);
+
+        viagemService.atualizar(
+                viagem.getId(), dono, "Novo Cliente", "Novo Destino", "Novo Local",
+                LocalDate.now().plusDays(3), LocalTime.of(14, 30), new BigDecimal("275.50"), "obs atualizada");
+
+        entityManager.flush();
+        entityManager.clear(); // força a próxima leitura a ir ao banco, não ao cache do contexto de persistência
+
+        Viagem recarregada = viagemRepository.findById(viagem.getId()).orElseThrow();
+        assertThat(recarregada.getNomeCliente())
+                .as("campos deveriam ter sido persistidos via dirty checking, sem chamada explícita a save()")
+                .isEqualTo("Novo Cliente");
+        assertThat(recarregada.getDestino()).isEqualTo("Novo Destino");
+        assertThat(recarregada.getLocalPartida()).isEqualTo("Novo Local");
+        assertThat(recarregada.getDataPartida()).isEqualTo(LocalDate.now().plusDays(3));
+        assertThat(recarregada.getHorarioPartida()).isEqualTo(LocalTime.of(14, 30));
+        assertThat(recarregada.getValorCobrado()).isEqualByComparingTo("275.50");
+        assertThat(recarregada.getObservacoes()).isEqualTo("obs atualizada");
+    }
+
+    @Test
+    void atualizar_viagemDeOutroUsuario_lancaExceptionENaoAlteraBanco() {
+        Viagem viagem = registrarViagemPersistida(dono, StatusViagem.AGENDADA);
+
+        assertThatThrownBy(() -> viagemService.atualizar(
+                viagem.getId(), outroUsuario, "Novo Cliente", "Novo Destino", "Novo Local",
+                LocalDate.now().plusDays(3), LocalTime.of(14, 30), new BigDecimal("275.50"), "obs atualizada"))
+                .isInstanceOf(UnauthorizedAcessException.class);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Viagem recarregada = viagemRepository.findById(viagem.getId()).orElseThrow();
+        assertThat(recarregada.getNomeCliente()).isEqualTo("Cliente X"); // valor original de registrarViagemPersistida
+        assertThat(recarregada.getDestino()).isEqualTo("Destino Y");
+    }
+
+    @Test
     void avaliar_viagemConcluida_persisteAvaliacaoViaDirtyChecking() {
         Viagem viagem = registrarViagemPersistida(dono, StatusViagem.CONCLUIDA);
 

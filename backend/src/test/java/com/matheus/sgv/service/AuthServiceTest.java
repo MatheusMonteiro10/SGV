@@ -273,6 +273,101 @@ class AuthServiceTest {
         verify(emailService, never()).enviarCodigoResetSenha(any(), any());
     }
 
+    // ---------- redefinir senha ----------
+
+    @Test
+    void redefinirSenha_senhasDiferentes_lancaInvalidCredentialsException() {
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "outraSenha1"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verifyNoInteractions(usuarioRepository, codigoVerificacaoRepository);
+    }
+
+    @Test
+    void redefinirSenha_usuarioNaoEncontrado_lancaResourceNotFoundException() {
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1"))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verifyNoInteractions(codigoVerificacaoRepository);
+    }
+
+    @Test
+    void redefinirSenha_contaGoogle_lancaPasswordResetNotAllowedException() {
+        Usuario usuarioGoogle = new Usuario("Ana", "ana@mail.com", "google-123", AuthProvider.GOOGLE);
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.of(usuarioGoogle));
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1"))
+                .isInstanceOf(PasswordResetNotAllowedException.class);
+
+        verifyNoInteractions(codigoVerificacaoRepository, passwordEncoder);
+    }
+
+    @Test
+    void redefinirSenha_codigoNaoEncontrado_lancaInvalidVerificationCodeException() {
+        Usuario usuario = new Usuario("Ana", "ana@mail.com", "hash");
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.of(usuario));
+        when(codigoVerificacaoRepository.findTopByUsuarioAndTipoAndUsadoFalseOrderByExpiracaoDesc(
+                usuario, TipoCodigoVerificacao.RESET_SENHA)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1"))
+                .isInstanceOf(InvalidVerificationCodeException.class)
+                .hasMessage("Código inválido");
+
+        verify(passwordEncoder, never()).encode(any());
+    }
+
+    @Test
+    void redefinirSenha_codigoExpirado_lancaInvalidVerificationCodeException() {
+        Usuario usuario = new Usuario("Ana", "ana@mail.com", "hash");
+        CodigoVerificacao codigo = new CodigoVerificacao(
+                usuario, "123456", TipoCodigoVerificacao.RESET_SENHA, LocalDateTime.now().minusMinutes(1));
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.of(usuario));
+        when(codigoVerificacaoRepository.findTopByUsuarioAndTipoAndUsadoFalseOrderByExpiracaoDesc(
+                usuario, TipoCodigoVerificacao.RESET_SENHA)).thenReturn(Optional.of(codigo));
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1"))
+                .isInstanceOf(InvalidVerificationCodeException.class)
+                .hasMessage("Código expirado");
+    }
+
+    @Test
+    void redefinirSenha_codigoIncorreto_lancaInvalidVerificationCodeException() {
+        Usuario usuario = new Usuario("Ana", "ana@mail.com", "hash");
+        CodigoVerificacao codigo = new CodigoVerificacao(
+                usuario, "123456", TipoCodigoVerificacao.RESET_SENHA, LocalDateTime.now().plusMinutes(5));
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.of(usuario));
+        when(codigoVerificacaoRepository.findTopByUsuarioAndTipoAndUsadoFalseOrderByExpiracaoDesc(
+                usuario, TipoCodigoVerificacao.RESET_SENHA)).thenReturn(Optional.of(codigo));
+
+        assertThatThrownBy(() ->
+                authService.redefinirSenha("ana@mail.com", "999999", "novaSenha1", "novaSenha1"))
+                .isInstanceOf(InvalidVerificationCodeException.class)
+                .hasMessage("Código incorreto");
+    }
+
+    @Test
+    void redefinirSenha_sucesso_atualizaSenhaHashEMarcaCodigoComoUsado() {
+        Usuario usuario = new Usuario("Ana", "ana@mail.com", "hashAntigo");
+        CodigoVerificacao codigo = new CodigoVerificacao(
+                usuario, "123456", TipoCodigoVerificacao.RESET_SENHA, LocalDateTime.now().plusMinutes(5));
+        when(usuarioRepository.findByEmail("ana@mail.com")).thenReturn(Optional.of(usuario));
+        when(codigoVerificacaoRepository.findTopByUsuarioAndTipoAndUsadoFalseOrderByExpiracaoDesc(
+                usuario, TipoCodigoVerificacao.RESET_SENHA)).thenReturn(Optional.of(codigo));
+        when(passwordEncoder.encode("novaSenha1")).thenReturn("hashNovo");
+
+        authService.redefinirSenha("ana@mail.com", "123456", "novaSenha1", "novaSenha1");
+
+        assertThat(usuario.getSenhaHash()).isEqualTo("hashNovo");
+        assertThat(codigo.isUsado()).isTrue();
+    }
+
     // ---------- autenticar ou registrar Google ----------
 
     @Test

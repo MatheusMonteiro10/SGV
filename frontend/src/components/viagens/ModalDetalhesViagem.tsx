@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Modal } from '../ui/Modal'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { useExcluirViagem } from '../../hooks/useExcluirViagem'
-import { formatarHorario } from '../../utils/viagem'
+import { formatarHorario, formatarMoeda, formatarDataExtensa } from '../../utils/viagem'
 import type { ViagemResponse } from '../../types/viagem'
 
 interface ModalDetalhesViagemProps {
@@ -12,25 +12,9 @@ interface ModalDetalhesViagemProps {
   onAlterar: (viagem: ViagemResponse) => void
 }
 
-const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-
 const STATUS_LABEL: Record<ViagemResponse['status'], string> = {
   AGENDADA: 'Agendada',
   CONCLUIDA: 'Concluída',
-}
-
-function formatarData(dataIso: string): string {
-  // dataIso é yyyy-MM-dd local; construir com partes evita off-by-one por fuso,
-  // mesmo padrão já usado no título do Modal 1 (CalendarioPage).
-  const [y, m, d] = dataIso.split('-').map(Number)
-  const data = new Date(y, m - 1, d)
-  const texto = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(data)
-  return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
 export function ModalDetalhesViagem({ isOpen, onClose, viagem, onAlterar }: ModalDetalhesViagemProps) {
@@ -102,9 +86,9 @@ export function ModalDetalhesViagem({ isOpen, onClose, viagem, onAlterar }: Moda
           <Campo label="Cliente" valor={viagem.nomeCliente} />
           <Campo label="Destino" valor={viagem.destino} />
           <Campo label="Local de partida" valor={viagem.localPartida} />
-          <Campo label="Data" valor={formatarData(viagem.dataPartida)} />
+          <Campo label="Data" valor={formatarDataExtensa(viagem.dataPartida)} />
           <Campo label="Horário de partida" valor={formatarHorario(viagem.horarioPartida)} />
-          <Campo label="Valor cobrado" valor={formatadorMoeda.format(viagem.valorCobrado)} />
+          <Campo label="Valor cobrado" valor={formatarMoeda(viagem.valorCobrado)} />
           {viagem.observacoes && <Campo label="Observações" valor={viagem.observacoes} multiline />}
           {viagem.status === 'CONCLUIDA' && viagem.avaliacao != null && (
             <Campo label="Avaliação" valor={`${viagem.avaliacao} / 5`} />

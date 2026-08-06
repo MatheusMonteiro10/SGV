@@ -1,5 +1,6 @@
 package com.matheus.sgv.service;
 
+import com.matheus.sgv.exception.InvalidDepartureDateException;
 import com.matheus.sgv.exception.UnauthorizedAcessException;
 import com.matheus.sgv.exception.ResourceNotFoundException;
 import com.matheus.sgv.exception.InvalidStatusTransitionException;
@@ -29,6 +30,7 @@ public class ViagemService {
     public Viagem registrar(Usuario usuario, String nomeCliente, String destino, String localPartida,
                             LocalDate dataPartida, LocalTime horarioPartida, BigDecimal valorCobrado,
                             String observacoes) {
+        validarDataNaoPassada(dataPartida);
         Viagem viagem = new Viagem(usuario, nomeCliente, destino, localPartida,
                 dataPartida, horarioPartida, valorCobrado, observacoes);
         return viagemRepository.save(viagem);
@@ -87,17 +89,17 @@ public class ViagemService {
         return viagem;
     }
 
-    private void validarPropriedade(Viagem viagem, Usuario solicitante) {
-        if (!viagem.getUsuario().getId().equals(solicitante.getId())) {
-            throw new UnauthorizedAcessException("Viagem não pertence ao usuário solicitante");
-        }
-    }
-
     @Transactional
     public Viagem atualizar(UUID id, Usuario solicitante, String nomeCliente, String destino, String localPartida,
                             LocalDate dataPartida, LocalTime horarioPartida, BigDecimal valorCobrado,
                             String observacoes) {
         Viagem viagem = buscarPorId(id, solicitante);
+
+        // Só valida "não pode ser passado" quando a viagem permanece AGENDADA.
+        // Viagens CONCLUIDA legitimamente têm dataPartida no passado.
+        if (viagem.getStatusViagem() == StatusViagem.AGENDADA) {
+            validarDataNaoPassada(dataPartida);
+        }
 
         viagem.setNomeCliente(nomeCliente);
         viagem.setDestino(destino);
@@ -107,6 +109,18 @@ public class ViagemService {
         viagem.setValorCobrado(valorCobrado);
         viagem.setObservacoes(observacoes);
 
-        return viagem; 
+        return viagem;
+    }
+
+    private void validarPropriedade(Viagem viagem, Usuario solicitante) {
+        if (!viagem.getUsuario().getId().equals(solicitante.getId())) {
+            throw new UnauthorizedAcessException("Viagem não pertence ao usuário solicitante");
+        }
+    }
+
+    private void validarDataNaoPassada(LocalDate dataPartida) {
+        if (dataPartida.isBefore(LocalDate.now())) {
+            throw new InvalidDepartureDateException("Não é possível agendar viagem para uma data anterior a hoje");
+        }
     }
 }

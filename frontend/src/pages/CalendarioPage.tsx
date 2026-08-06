@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useViagensPorPeriodo } from '../hooks/useViagensPorPeriodo'
-import { gerarGradeMensal, NOMES_DIAS_SEMANA, NOMES_MESES } from '../utils/calendario'
+import { formatarDataIso, gerarGradeMensal, NOMES_DIAS_SEMANA, NOMES_MESES } from '../utils/calendario'
 import { ModalListaViagensDia } from '../components/viagens/ModalListaViagensDia'
 import { ModalDetalhesViagem } from '../components/viagens/ModalDetalhesViagem'
 import { ModalRegistroEdicaoViagem } from '../components/viagens/ModalRegistroEdicaoViagem'
@@ -36,11 +36,24 @@ export function CalendarioPage() {
     return set
   }, [viagens])
 
-  // Viagens AGENDADA do dia clicado, ordenadas por horário — é o que o Modal 1 lista.
+  const diasComConcluida = useMemo(() => {
+    const set = new Set<string>()
+    viagens
+      ?.filter((v) => v.status === 'CONCLUIDA')
+      .forEach((v) => set.add(v.dataPartida))
+    return set
+  }, [viagens])
+
+  const diaSelecionadoPassado = useMemo(() => {
+    if (!diaSelecionado) return false
+    return diaSelecionado < formatarDataIso(hoje)
+  }, [diaSelecionado, hoje])
+
+  // Viagens do dia clicado (qualquer status), ordenadas por horário — é o que o Modal 1 lista.
   const viagensDoDiaSelecionado = useMemo(() => {
     if (!diaSelecionado || !viagens) return []
     return viagens
-      .filter((v) => v.status === 'AGENDADA' && v.dataPartida === diaSelecionado)
+      .filter((v) => v.dataPartida === diaSelecionado)
       .sort((a, b) => a.horarioPartida.localeCompare(b.horarioPartida))
   }, [viagens, diaSelecionado])
 
@@ -106,7 +119,9 @@ export function CalendarioPage() {
 
   function handleAgendarNovaViagem() {
     if (!diaSelecionado) return
-    setFormulario({ modo: 'criar', data: diaSelecionado })
+    const hoje = formatarDataIso(new Date())
+    const data = diaSelecionado < hoje ? hoje : diaSelecionado
+    setFormulario({ modo: 'criar', data })
   }
 
   function handleFecharFormulario() {
@@ -178,6 +193,7 @@ export function CalendarioPage() {
       <div className="mt-1 grid grid-cols-7 gap-1">
         {grade.map((dia) => {
           const temAgendada = diasComAgendada.has(dia.dataIso)
+          const temConcluida = diasComConcluida.has(dia.dataIso)
           const estaSelecionado = diaSelecionado === dia.dataIso
 
           return (
@@ -196,21 +212,31 @@ export function CalendarioPage() {
               ].join(' ')}
             >
               <span className={dia.isHoje ? 'font-semibold text-amber-dim' : undefined}>{dia.diaDoMes}</span>
-              {temAgendada && (
-                <span
-                  className="mt-1 h-1.5 w-1.5 rounded-full bg-amber"
-                  aria-label="Dia com viagem agendada"
-                />
+              {(temAgendada || temConcluida) && (
+                <span className="mt-1 flex items-center gap-0.5">
+                  {temAgendada && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-label="Dia com viagem agendada" />
+                  )}
+                  {temConcluida && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal" aria-label="Dia com viagem concluída" />
+                  )}
+                </span>
               )}
             </button>
           )
         })}
       </div>
 
-      <p className="mt-6 flex items-center gap-2 text-xs text-ink-soft">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber" />
-        Dia com viagem agendada
-      </p>
+      <div className="mt-6 flex items-center gap-4 text-xs text-ink-soft">
+        <span className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber" />
+          Viagem agendada
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-teal" />
+          Viagem concluída
+        </span>
+      </div>
 
       <ModalListaViagensDia
         isOpen={diaSelecionado !== null}
@@ -220,6 +246,7 @@ export function CalendarioPage() {
         isLoading={isLoading}
         onSelecionarViagem={handleSelecionarViagem}
         onAgendarNovaViagem={handleAgendarNovaViagem}
+        podeAgendar={!diaSelecionadoPassado}
       />
 
       <ModalDetalhesViagem

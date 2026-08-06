@@ -81,6 +81,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidDepartureDateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidDepartureDate(InvalidDepartureDateException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {
         ErrorResponse body = new ErrorResponse(LocalDateTime.now(), status.value(), message, null);
         return ResponseEntity.status(status).body(body);

@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal'
 import { useRegistrarViagem } from '../../hooks/useRegistrarViagem'
 import { useAtualizarViagem } from '../../hooks/useAtualizarViagem'
 import { formatarHorario } from '../../utils/viagem'
+import { formatarDataIso } from '../../utils/calendario'
 import type { ApiErrorResponse } from '../../types/auth'
 import type { ViagemResponse } from '../../types/viagem'
 
@@ -86,6 +87,8 @@ function estadoInicial(modo: 'criar' | 'editar', viagem: ViagemResponse | null, 
 
 function FormularioViagem({ modo, viagem, dataInicial, onClose, onSuccess }: FormularioViagemProps) {
   const [form, setForm] = useState<FormState>(() => estadoInicial(modo, viagem, dataInicial))
+  const bloqueiaDataPassada = modo === 'criar' || viagem?.status === 'AGENDADA'
+  const dataMinima = bloqueiaDataPassada ? formatarDataIso(new Date()) : undefined
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -101,6 +104,11 @@ function FormularioViagem({ modo, viagem, dataInicial, onClose, onSuccess }: For
     event.preventDefault()
     setFormError(null)
     setFieldErrors({})
+
+    if (dataMinima && form.dataPartida < dataMinima) {
+      setFieldErrors({ dataPartida: 'Não é possível agendar viagem para uma data anterior ao dia de hoje'})
+      return 
+    }
 
     const dados = {
       nomeCliente: form.nomeCliente,
@@ -176,6 +184,7 @@ function FormularioViagem({ modo, viagem, dataInicial, onClose, onSuccess }: For
             <input
               type="date"
               required
+              min={dataMinima}
               value={form.dataPartida}
               onChange={(e) => handleChange('dataPartida', e.target.value)}
               className={inputClass}

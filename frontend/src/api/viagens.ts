@@ -20,3 +20,11 @@ export function listarPorStatus(status: StatusViagem) {
 export function excluirViagem(id: string) {
   return api.delete<void>(`/viagens/${id}`)
 }
+
+export function concluirViagem(id: string) {
+  return api.patch<ViagemResponse>(`/viagens/${id}/concluir`)
+}
+
+export function avaliarViagem(id: string, nota: number) {
+  return api.patch<ViagemResponse>(`/viagens/${id}/avaliacao`, { nota })
+}

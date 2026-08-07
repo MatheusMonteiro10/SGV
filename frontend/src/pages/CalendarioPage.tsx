@@ -11,7 +11,7 @@ type EstadoFormulario =
   | { modo: 'editar'; viagem: ViagemResponse }
 
 export function CalendarioPage() {
-  const hoje = new Date()
+  const hoje = useMemo(() => new Date(), [])
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth()) // 0-indexed
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null)

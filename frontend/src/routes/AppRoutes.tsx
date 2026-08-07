@@ -4,7 +4,7 @@ import { RegistroPage } from '../pages/auth/RegistroPage'
 import { VerificarEmailPage } from '../pages/auth/VerificarEmailPage'
 import { CalendarioPage } from '../pages/CalendarioPage'
 import { HistoricoPage } from '../pages/HistoricoPage'
-import { FinanceiroPage } from '../pages/FinanceiroPage'
+import { DasboardPage } from '../pages/DashboardPage'
 import { AppLayout } from '../components/layout/AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 
@@ -42,7 +42,7 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <AppLayout>
-              <FinanceiroPage />
+              <DasboardPage />
             </AppLayout>
           </ProtectedRoute>
         }

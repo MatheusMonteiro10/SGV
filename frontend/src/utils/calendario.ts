@@ -78,4 +78,6 @@ export const NOMES_MESES = [
   'Dezembro',
 ]
 
+export const NOMES_MESES_ABREV = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+
 export const NOMES_DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']

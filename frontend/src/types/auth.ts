@@ -44,3 +44,14 @@ export interface ApiErrorResponse {
 export interface GoogleLoginRequest {
   idToken: string
 }
+
+export interface EsqueciSenhaRequest {
+  email: string
+}
+
+export interface RedefinirSenhaRequest {
+  email: string
+  codigo: string
+  novaSenha: string
+  confirmacaoNovaSenha: string
+}

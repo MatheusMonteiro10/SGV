@@ -57,13 +57,13 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(
-            java.util.Arrays.stream(allowedOriginsRaw.split(","))
-                    .map(String::trim)
-                    .filter(origin -> !origin.isEmpty())
-                    .toList()
+                java.util.Arrays.stream(allowedOriginsRaw.split(","))
+                        .map(String::trim)
+                        .filter(origin -> !origin.isEmpty())
+                        .toList()
         );
-        config.setAllowedOrigins(List.of(allowedOriginsRaw.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

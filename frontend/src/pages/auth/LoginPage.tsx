@@ -126,6 +126,12 @@ export function LoginPage() {
           {fieldErrors.senha && <p className="mt-1 text-xs text-danger">{fieldErrors.senha}</p>}
         </div>
 
+        <div className="text-center">
+          <Link to="/esqueci-senha" className="text-xs text-ink-soft underline-offset-4 hover:underline">
+            Esqueceu sua senha?
+          </Link>
+        </div>
+
         <button
           type="submit"
           disabled={isLoading}

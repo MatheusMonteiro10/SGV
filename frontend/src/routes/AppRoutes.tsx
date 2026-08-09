@@ -2,9 +2,11 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '../pages/auth/LoginPage'
 import { RegistroPage } from '../pages/auth/RegistroPage'
 import { VerificarEmailPage } from '../pages/auth/VerificarEmailPage'
+import { EsqueciSenhaPage } from '../pages/auth/EsqueciSenhaPage'
+import { RedefinirSenhaPage } from '../pages/auth/RedefinirSenhaPage'
 import { CalendarioPage } from '../pages/CalendarioPage'
 import { HistoricoPage } from '../pages/HistoricoPage'
-import { DasboardPage } from '../pages/DashboardPage'
+import { DashboardPage } from '../pages/DashboardPage'
 import { AppLayout } from '../components/layout/AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 
@@ -14,6 +16,8 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<RegistroPage />} />
       <Route path="/verificar-email" element={<VerificarEmailPage />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenhaPage />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenhaPage />} />
 
       <Route
         path="/"
@@ -38,11 +42,11 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/financeiro"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <AppLayout>
-              <DasboardPage />
+              <DashboardPage />
             </AppLayout>
           </ProtectedRoute>
         }

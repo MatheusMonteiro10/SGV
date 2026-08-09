@@ -13,7 +13,7 @@ import {
   formatarDataAtualizacao,
 } from '../utils/dashboard'
 
-export function DasboardPage() {
+export function DashboardPage() {
   const hoje = useMemo(() => new Date(), [])
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mesSelecionado, setMesSelecionado] = useState<number | null>(null)

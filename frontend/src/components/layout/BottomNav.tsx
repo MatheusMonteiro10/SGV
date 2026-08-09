@@ -47,7 +47,7 @@ function CalendarioIcon({ active }: IconProps) {
   )
 }
 
-function FinanceiroIcon({ active }: IconProps) {
+function DashboardIcon({ active }: IconProps) {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
@@ -75,7 +75,7 @@ const ITEMS: Array<{
 }> = [
   { to: '/historico', label: 'Histórico', icon: HistoricoIcon },
   { to: '/', label: 'Calendário', icon: CalendarioIcon, end: true },
-  { to: '/financeiro', label: 'Financeiro', icon: FinanceiroIcon },
+  { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
 ]
 
 export function BottomNav() {

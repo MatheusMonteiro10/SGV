@@ -30,13 +30,17 @@ function loadGsiScript(): Promise<void> {
 
 export function GoogleSignInButton({ onCredential, text = 'continue_with' }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [erro, setErro] = useState<string | null>(null)
+
+  /* Erro de configuração ausente (CLIENT_ID) é derivado direto do ambiente,
+   não do carregamento assíncrono do script, por isso calculamos no estado
+   inicial em vez de setar dentro de um efeito (evita o lint set-state-in-effect
+   e uma render extra desnecessária pra um valor que nunca muda em runtime)*/
+  const [erro, setErro] = useState<string | null>(
+    CLIENT_ID ? null : 'Login com Google indisponível no momento.',
+  )
 
   useEffect(() => {
-    if (!CLIENT_ID) {
-      setErro('Login com Google indisponível no momento.')
-      return
-    }
+    if (!CLIENT_ID) return
 
     let cancelado = false
 

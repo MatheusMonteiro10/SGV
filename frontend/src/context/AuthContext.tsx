@@ -1,20 +1,10 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import api, { TOKEN_KEY } from '../api/axios'
 import { isTokenExpired } from '../utils/jwt'
+import { AuthContext, type AuthContextValue } from './AuthContextInstance'
 import type { LoginResponse, Usuario } from '../types/auth'
 
 const USUARIO_KEY = 'sgv:usuario'
-
-interface AuthContextValue {
-  usuario: Usuario | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  login: (email: string, senha: string) => Promise<void>
-  loginWithGoogle: (idToken: string) => Promise<void>
-  logout: () => void
-}
-
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 function limparStorage() {
   localStorage.removeItem(TOKEN_KEY)

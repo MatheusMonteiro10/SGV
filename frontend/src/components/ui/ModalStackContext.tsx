@@ -1,12 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-
-interface ModalStackContextValue {
-  register: (id: string) => void
-  unregister: (id: string) => void
-  stack: string[]
-}
-
-const ModalStackContext = createContext<ModalStackContextValue | null>(null)
+import { useCallback, useState, type ReactNode } from 'react'
+import { ModalStackContext } from './ModalStackContextInstance'
 
 export function ModalStackProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<string[]>([])
@@ -24,12 +17,4 @@ export function ModalStackProvider({ children }: { children: ReactNode }) {
       {children}
     </ModalStackContext.Provider>
   )
-}
-
-export function useModalStack() {
-  const context = useContext(ModalStackContext)
-  if (!context) {
-    throw new Error('useModalStack deve ser usado dentro de um ModalStackProvider')
-  }
-  return context
 }

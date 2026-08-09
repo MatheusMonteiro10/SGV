@@ -1,6 +1,6 @@
 import { useEffect, useId, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { useModalStack } from './ModalStackContext'
+import { useModalStack } from '../../hooks/useModalStack'
 
 interface ModalProps {
   isOpen: boolean
